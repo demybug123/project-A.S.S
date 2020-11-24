@@ -105,7 +105,8 @@ const char * ssid = "DIFR.APoint";
 const char * password = "17092020";
 uint8_t uid[8];
 uint8_t uidBuffer[4][8];
-uint8_t *ptr;
+uint8_t *ptr1;
+uint8_t *ptr2;
 uint8_t readBuffer[4];
 uint8_t SerialBuffer[4][4];
 int n=0;
@@ -170,6 +171,7 @@ void sendData(String params) {
    HTTPClient http;
    String url="https://script.google.com/macros/s/"+GOOGLE_SCRIPT_ID+"/exec?"+params;
     Serial.print("Making a request");
+    Serial.println(url);
     http.begin(url, root_ca); //Specify the URL and certificate
     int httpCode = http.GET();  
     http.end();
@@ -200,7 +202,6 @@ for(int i=len-1;i>=0;i--){
     }
     reverseStr(s);
     S+=s;
-    S+=43;
     s="";
 }
 return S;
@@ -210,7 +211,7 @@ void addToBuffer(uint8_t* uid, uint8_t* readBuffer){
     for(int j=0;j<8;j++){
       uidBuffer[n][j]=uid[j];
       }
-	for(j=0;j<4;j++){
+  for(int j=0;j<4;j++){
       SerialBuffer[n][j]=readBuffer[j];
       }
       n++;
@@ -220,19 +221,21 @@ void addToBuffer(uint8_t* uid, uint8_t* readBuffer){
 
 void isBufferFull(void * parameter){
   for(;;){
-    ptr=(uint8_t*)uidBuffer;
+    ptr1=(uint8_t*)uidBuffer;
+    ptr2=(uint8_t*)SerialBuffer;
     int rowNum;
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
     if(rowNum==4){
     n=0;
     Serial.println("Buffer is full!");
-    sendData("UID="+ uidtos((ptr),8)+uidtos((ptr+8),8)+uidtos((ptr+16),8)+uidtos((ptr+24),8)+"&Serial="+uidtos(readBuffer,4)+);
+    sendData("UID="+ uidtos(ptr1,8)+"&Serial="+uidtos(ptr2,4));
     delay(sendInterval);
     }
     memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
+    memset(SerialBuffer, 0, 32*(sizeof(uint8_t)));
     delay(100);
 }}
-}
+
 
 uint32_t loopCnt = 0;
 bool errorFlag = false;
@@ -248,7 +251,7 @@ void scan(){
 
     nfc.reset();
     nfc.setupRF();
-			
+      
     errorFlag = false;
   }
 
