@@ -1,6 +1,4 @@
 
-
-
 // NAME: PN5180-Library.ino
 //
 // DESC: Example usage of the PN5180 library for the PN5180-NFC Module
@@ -72,7 +70,6 @@
  * 13   REQ     2?  I/O   AUX2 - Analog test bus or download
  *
  
-
 #define WRITE_ENABLED 1*/
 
 #include <PN5180.h>
@@ -105,8 +102,12 @@ const char * ssid = "DIFR.APoint";
 const char * password = "17092020";
 uint8_t uid[8];
 uint8_t uidBuffer[4][8];
-uint8_t *ptr;
+uint8_t uidBucket[4][8];
+uint8_t *ptr1;
+uint8_t *ptr2;
 uint8_t readBuffer[4];
+uint8_t serialBuffer[4][8];
+uint8_t serialBucket[4][8];
 int n=0;
 
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
@@ -172,7 +173,6 @@ void sendData(String params) {
     http.begin(url, root_ca); //Specify the URL and certificate
     int httpCode = http.GET();  
     http.end();
-    Serial.println(": done "+httpCode);
 }
 
 void reverseStr(String& string)
@@ -201,32 +201,37 @@ for(int i=len-1;i>=0;i--){
     S+=s;
     s="";
 }
-return S;
+return S+"a";
 }
 
 void addToBuffer(uint8_t* uid){
     for(int j=0;j<8;j++){
       uidBuffer[n][j]=uid[j];
       }
+    for(int j=0;j<4;j++){
+      serialBuffer[n][j]=readBuffer[j];
+      }
       n++;
+      
     }
 
 void isBufferFull(void * parameter){
   for(;;){
-    ptr=(uint8_t*)uidBuffer;
+    ptr1=(uint8_t*)uidBucket;
+    ptr2=(uint8_t*)serialBucket;
     int rowNum;
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
     if(rowNum==4){
     n=0;
     Serial.println("Buffer is full!");
-    for(int i=0;i<4;i++){
-    sendData("UID="+ uidtos((ptr+8*i),8)+"&Serial="+uidtos(readBuffer,4));
+    sendData("UID="+uidtos((ptr1),8)+uidtos(ptr1+8,8)+uidtos(ptr1+16,8)+uidtos(ptr1+24,8)+"&Serial="+uidtos(ptr2,4)+uidtos(ptr2+4,4)+uidtos(ptr2+8,4)+uidtos(ptr2+12,4));
+    memset(uidBucket, 0, 32*(sizeof(uint8_t)));
+    memset(serialBucket, 0, 32*(sizeof(uint8_t)));
     delay(sendInterval);
     }
-    memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
-    delay(100);
+    delay(10);
 }}
-}
+
 
 uint32_t loopCnt = 0;
 bool errorFlag = false;
@@ -348,7 +353,24 @@ void scan(){
     delay(5000);
 */
   addToBuffer(uid);
-  xQueueSend(queue, &n, portMAX_DELAY);
+  if(n==4){
+    for(int i=0;i<4;i++)
+    for(int j=0;j<8;j++)
+    uidBucket[i][j]=uidBuffer[i][j];
+    for(int i=0;i<4;i++)
+    for(int j=0;j<4;j++)
+    serialBucket[i][j]=serialBuffer[i][j];
+    xQueueSend(queue, &n, portMAX_DELAY);
+    memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
+    memset(serialBuffer, 0, 32*(sizeof(uint8_t)));
+  }
+    for(int i=0;i<4;i++)
+    {
+    Serial.print(i);Serial.print("= ");
+    for(int j=0;j<8;j++)
+    Serial.print(serialBucket[i][j]);
+    Serial.println();
+    }
   delay(1000);//delay between reads}
 }
 void codeForTask1(void * parameter) {
@@ -419,7 +441,6 @@ void setup() {
   nfc.readEEprom(IRQ_PIN_CONFIG, &irqConfig, 1));
   Serial.print(F("IRQ_PIN_CONFIG=0x"));
   Serial.println(irqConfig, HEX);
-
   Serial.println(F("----------------------------------"));
   Serial.println(F("Reading IRQ_ENABLE register..."));
   uint32_t irqEnable;
