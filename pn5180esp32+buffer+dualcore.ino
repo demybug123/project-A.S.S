@@ -107,6 +107,7 @@ uint8_t uid[8];
 uint8_t uidBuffer[4][8];
 uint8_t *ptr;
 uint8_t readBuffer[4];
+uint8_t SerialBuffer[4][4];
 int n=0;
 
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
@@ -199,17 +200,23 @@ for(int i=len-1;i>=0;i--){
     }
     reverseStr(s);
     S+=s;
+    S+=43;
     s="";
 }
 return S;
 }
 
-void addToBuffer(uint8_t* uid){
+void addToBuffer(uint8_t* uid, uint8_t* readBuffer){
     for(int j=0;j<8;j++){
       uidBuffer[n][j]=uid[j];
       }
+	for(j=0;j<4;j++){
+      SerialBuffer[n][j]=readBuffer[j];
+      }
       n++;
     }
+
+
 
 void isBufferFull(void * parameter){
   for(;;){
@@ -219,8 +226,7 @@ void isBufferFull(void * parameter){
     if(rowNum==4){
     n=0;
     Serial.println("Buffer is full!");
-    for(int i=0;i<4;i++){
-    sendData("UID="+ uidtos((ptr+8*i),8)+"&Serial="+uidtos(readBuffer,4));
+    sendData("UID="+ uidtos((ptr),8)+uidtos((ptr+8),8)+uidtos((ptr+16),8)+uidtos((ptr+24),8)+"&Serial="+uidtos(readBuffer,4)+);
     delay(sendInterval);
     }
     memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
@@ -242,7 +248,7 @@ void scan(){
 
     nfc.reset();
     nfc.setupRF();
-
+			
     errorFlag = false;
   }
 
@@ -347,7 +353,7 @@ void scan(){
     Serial.println("lockICODESLIX2 successful");
     delay(5000);
 */
-  addToBuffer(uid);
+  addToBuffer(uid, readBuffer);
   xQueueSend(queue, &n, portMAX_DELAY);
   delay(1000);//delay between reads}
 }
