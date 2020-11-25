@@ -1,4 +1,3 @@
-
 // NAME: PN5180-Library.ino
 //
 // DESC: Example usage of the PN5180 library for the PN5180-NFC Module
@@ -101,18 +100,18 @@ PN5180ISO15693 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 const char * ssid = "DIFR.APoint";
 const char * password = "17092020";
 uint8_t uid[8];
-uint8_t uidBuffer[4][8];
-uint8_t uidBucket[4][8];
+uint8_t uidBuffer[5][8];
+uint8_t uidBucket[5][8];
 uint8_t *ptr1;
 uint8_t *ptr2;
 uint8_t readBuffer[4];
-uint8_t serialBuffer[4][8];
-uint8_t serialBucket[4][8];
+uint8_t serialBuffer[5][4];
+uint8_t serialBucket[5][4];
 int n=0;
 
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
 
-const int sendInterval = 996 *5; // in millis, 996 instead of 1000 is adjustment, with 1000 it jumps ahead a minute every 3-4 hours
+const int sendInterval = 996 *4; // in millis, 996 instead of 1000 is adjustment, with 1000 it jumps ahead a minute every 3-4 hours
 const char * root_ca=\
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIDujCCAqKgAwIBAgILBAAAAAABD4Ym5g0wDQYJKoZIhvcNAQEFBQAwTDEgMB4G\n" \
@@ -221,12 +220,12 @@ void isBufferFull(void * parameter){
     ptr2=(uint8_t*)serialBucket;
     int rowNum;
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
-    if(rowNum==4){
+    if(rowNum==5){
     n=0;
     Serial.println("Buffer is full!");
-    sendData("UID="+uidtos((ptr1),8)+uidtos(ptr1+8,8)+uidtos(ptr1+16,8)+uidtos(ptr1+24,8)+"&Serial="+uidtos(ptr2,4)+uidtos(ptr2+4,4)+uidtos(ptr2+8,4)+uidtos(ptr2+12,4));
-    memset(uidBucket, 0, 32*(sizeof(uint8_t)));
-    memset(serialBucket, 0, 32*(sizeof(uint8_t)));
+    sendData("UID="+uidtos((ptr1),8)+uidtos(ptr1+8,8)+uidtos(ptr1+16,8)+uidtos(ptr1+24,8)+uidtos(ptr1+32,8)+"&Serial="+uidtos(ptr2,4)+uidtos(ptr2+4,4)+uidtos(ptr2+8,4)+uidtos(ptr2+12,4)+uidtos(ptr2+16,4));
+    memset(uidBucket, 0, 40*(sizeof(uint8_t)));
+    memset(serialBucket, 0, 20*(sizeof(uint8_t)));
     delay(sendInterval);
     }
     delay(10);
@@ -353,25 +352,18 @@ void scan(){
     delay(5000);
 */
   addToBuffer(uid);
-  if(n==4){
-    for(int i=0;i<4;i++)
+  if(n==5){
+    for(int i=0;i<5;i++)
     for(int j=0;j<8;j++)
     uidBucket[i][j]=uidBuffer[i][j];
-    for(int i=0;i<4;i++)
+    for(int i=0;i<5;i++)
     for(int j=0;j<4;j++)
     serialBucket[i][j]=serialBuffer[i][j];
     xQueueSend(queue, &n, portMAX_DELAY);
-    memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
-    memset(serialBuffer, 0, 32*(sizeof(uint8_t)));
-  }
-    for(int i=0;i<4;i++)
-    {
-    Serial.print(i);Serial.print("= ");
-    for(int j=0;j<8;j++)
-    Serial.print(serialBucket[i][j]);
-    Serial.println();
-    }
-  delay(1000);//delay between reads}
+    memset(uidBuffer, 0, 40*(sizeof(uint8_t)));
+    memset(serialBuffer, 0, 20*(sizeof(uint8_t)));
+  }    
+  delay(500);//delay between reads}
 }
 void codeForTask1(void * parameter) {
   for(;;){
