@@ -1,4 +1,3 @@
-
 // NAME: PN5180-Library.ino
 //
 // DESC: Example usage of the PN5180 library for the PN5180-NFC Module
@@ -106,8 +105,8 @@ uint8_t uidBucket[4][8];
 uint8_t *ptr1;
 uint8_t *ptr2;
 uint8_t readBuffer[4];
-uint8_t serialBuffer[4][8];
-uint8_t serialBucket[4][8];
+uint8_t serialBuffer[4][4];
+uint8_t serialBucket[4][4];
 int n=0;
 
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
@@ -226,7 +225,7 @@ void isBufferFull(void * parameter){
     Serial.println("Buffer is full!");
     sendData("UID="+uidtos((ptr1),8)+uidtos(ptr1+8,8)+uidtos(ptr1+16,8)+uidtos(ptr1+24,8)+"&Serial="+uidtos(ptr2,4)+uidtos(ptr2+4,4)+uidtos(ptr2+8,4)+uidtos(ptr2+12,4));
     memset(uidBucket, 0, 32*(sizeof(uint8_t)));
-    memset(serialBucket, 0, 32*(sizeof(uint8_t)));
+    memset(serialBucket, 0, 16*(sizeof(uint8_t)));
     delay(sendInterval);
     }
     delay(10);
@@ -362,12 +361,12 @@ void scan(){
     serialBucket[i][j]=serialBuffer[i][j];
     xQueueSend(queue, &n, portMAX_DELAY);
     memset(uidBuffer, 0, 32*(sizeof(uint8_t)));
-    memset(serialBuffer, 0, 32*(sizeof(uint8_t)));
+    memset(serialBuffer, 0, 16*(sizeof(uint8_t)));
   }
     for(int i=0;i<4;i++)
     {
     Serial.print(i);Serial.print("= ");
-    for(int j=0;j<8;j++)
+    for(int j=0;j<4;j++)
     Serial.print(serialBucket[i][j]);
     Serial.println();
     }
