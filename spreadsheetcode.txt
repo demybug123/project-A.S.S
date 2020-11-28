@@ -52,6 +52,8 @@ function doGet(e) {
             }
             var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
             newRange.setValues([rowData]);
+            var newRange = displaySheet.getRange(newRow, 1, 1, rowData.length);
+            newRange.setValues([rowData]);
             rowData = [];
             newRow++;
         }
@@ -68,28 +70,23 @@ function doGet(e) {
       newRange.setValues([rowData]);
       newRange = sheet.getRange(newRow, 2, 1, rowData.length);
       var fromRange = bufferSheet.getRange(newRow, 1, 1, 5);
-      if(newRow!=2)
-      newRow=newRow+5;
-      var toRange = displaySheet.getRange(newRow, 1, 5, 1);
+      var displayRow=newRow;
+      if(displayRow!=2)
+      displayRow=newRow+4*(newRow-2);
+      var toRange = displaySheet.getRange(displayRow, 2, 5, 1);
       newRange.copyTo(fromRange, SpreadsheetApp.CopyPasteType.PASTE_VALUES);
+      var serial=bufferSheet.getRange(newRow, 2).getValue();
+      bufferSheet.getRange(newRow,7).setValue(serial);
       bufferSheet.getRange(newRow, 1).splitTextToColumns('a');
-      bufferSheet.getRange(newRow, 2).splitTextToColumns('a');
+      bufferSheet.getRange(newRow, 7).splitTextToColumns('a');
       fromRange.copyTo(toRange, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, true);
+      fromRange=bufferSheet.getRange(newRow, 7, 1, 5);
+      toRange = displaySheet.getRange(displayRow, 3, 5, 1);
+      fromRange.copyTo(toRange, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, true);
+      displaySheet.getRange( displayRow,1,5).setValue(Utilities.formatDate(new Date(), timeZone, dateTimeFormat));
     }
     // Return result of operation
     return ContentService.createTextOutput(result);
-}
-function myFunction(){
-      var displaySheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet2");
-      var dataSheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
-      var bufferSheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet3");
-      var fromRange1= dataSheet.getRange(2,2);
-      var toRange1 = bufferSheet.getRange(2,2);
-      var fromRange2= dataSheet.getRange(2,2);
-      var toRange2 = bufferSheet.getRange(2,2);
-      fromRange1.copyTo(toRange1, SpreadsheetApp.CopyPasteType.PASTE_VALUES);
-      toRange1.splitTextToColumns('a');
-      bufferSheet.getRange(2,2,1,5).copyTo(displaySheet.getRange(2,2), SpreadsheetApp.CopyPasteType.PASTE_NORMAL, true);
 }
 
 /**
