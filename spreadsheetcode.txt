@@ -21,7 +21,9 @@ function doGet(e) {
             return ContentService.createTextOutput(result);
         }
 
-        var sheet = getSpreadSheet();
+        var displaySheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet2");
+        var sheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+        var bufferSheet= SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet3");
         var lastRow = sheet.getLastRow();
         var newRow = 1;
         if (lastRow > 0) {
@@ -32,7 +34,6 @@ function doGet(e) {
                 newRow = lastRow; //to overwrite "dead" value
             else
                 newRow = lastRow + 1;
-
         }
 
         var rowData = [];
@@ -51,6 +52,8 @@ function doGet(e) {
             }
             var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
             newRange.setValues([rowData]);
+            var newRange = displaySheet.getRange(newRow, 1, 1, rowData.length);
+            newRange.setValues([rowData]);
             rowData = [];
             newRow++;
         }
@@ -62,15 +65,29 @@ function doGet(e) {
             var value = stripQuotes(e.parameter[namesOfParams[i]]);
 
             rowData[i+1] = value;
-
         }
-        var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
-        newRange.setValues([rowData]);
+      var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
+      newRange.setValues([rowData]);
+      newRange = sheet.getRange(newRow, 2, 1, rowData.length);
+      var fromRange = bufferSheet.getRange(newRow, 1, 1, 5);
+      var displayRow=newRow;
+      if(displayRow!=2)
+      displayRow=newRow+4*(newRow-2);
+      var toRange = displaySheet.getRange(displayRow, 2, 5, 1);
+      newRange.copyTo(fromRange, SpreadsheetApp.CopyPasteType.PASTE_VALUES);
+      var serial=bufferSheet.getRange(newRow, 2).getValue();
+      bufferSheet.getRange(newRow,7).setValue(serial);
+      bufferSheet.getRange(newRow, 1).splitTextToColumns('a');
+      bufferSheet.getRange(newRow, 7).splitTextToColumns('a');
+      fromRange.copyTo(toRange, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, true);
+      fromRange=bufferSheet.getRange(newRow, 7, 1, 5);
+      toRange = displaySheet.getRange(displayRow, 3, 5, 1);
+      fromRange.copyTo(toRange, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, true);
+      displaySheet.getRange( displayRow,1,5).setValue(Utilities.formatDate(new Date(), timeZone, dateTimeFormat));
     }
     // Return result of operation
     return ContentService.createTextOutput(result);
 }
-
 
 /**
  * Remove leading and trailing single or double quotes
@@ -95,11 +112,5 @@ function sendEmail(message) {
         return;
     var subject = 'Something wrong with your esp';
    MailApp.sendEmail(emailAddress, subject, message);
-
 }
 
-
-function getSpreadSheet() {
-    return SpreadsheetApp.getActiveSheet();
-
-}
