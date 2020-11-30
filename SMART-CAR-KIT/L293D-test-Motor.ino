@@ -1,5 +1,4 @@
 #include <AFMotor.h>
-#include <NewPing.h>
 #include <Servo.h>
 
 //   4 chân của cảm biến siêu âm: GND,ECHO,TRIG,VCC
@@ -11,8 +10,8 @@
 //       VCC         -    5V
 
 /************************************************/
-AF_DCMotor motor1(1);        //motor - phai- noi pin 2 của L293D
-AF_DCMotor motor2(2);        //motor - trai- noi pin 3 của L293D
+AF_DCMotor motor1(2);        //motor - phai- noi pin 2 của L293D
+AF_DCMotor motor2(3);        //motor - trai- noi pin 3 của L293D
 
 Servo myservo;              //Servo SG90 cắm vao giắc 3 chân: SERVO2 (TRÊN L293D)
 
@@ -24,13 +23,10 @@ Servo myservo;              //Servo SG90 cắm vao giắc 3 chân: SERVO2 (TRÊN
 #define MAX_SPEED 235        // cài đặt tốc độ động cơ DC motors
 #define MAX_SPEED_OFFSET 20  
 
-NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE); 
+int speedSet=0;
 boolean goesForward=false;
-int distance = 100;
-int speedSet = 0;
 char command; 
-int dolech=20;
-
+int dolech=44;
 /*************************Define Line Track pins************************************/
 const int SensorLeft   = A5;      //Left sensor input (A5)
 const int SensorMiddle = A4;       //Midd sensor input (A4)
@@ -41,32 +37,25 @@ int SR;    //Status of Righ line track sensor
 
 unsigned char Dift=0; //center: Dift=0; lech trai: Dift = 1; lech phai:Dift = 2;
 
-void setup() {   
-    distance = readPing();
-    delay(100);
-    distance = readPing();
-    delay(100);
-    distance = readPing();
-    delay(100);
-    distance = readPing();
-    delay(100);
-    
+void setup() {      
     Serial.begin(9600);  //Set the baud rate to your Bluetooth module.
   
     pinMode(SensorLeft,  INPUT);    //Init left sensor
     pinMode(SensorMiddle, INPUT);   //Init Middle sensor
     pinMode(SensorRight, INPUT);    //Init Right sensor
-
+    delay(2500);
+    startUp();
+    delay(10);
 }
 void loop(){
-    forward(160,160); delay(1000);
-    Stop();delay(500);
+    forward(60,60);delay(3000);
+    Stop();delay(100000);
 }
 void forward(int a, int b)
 {
   motor1.setSpeed(b); //Define maximum velocity
   motor1.run(FORWARD); //rotate the motor clockwise
-  motor2.setSpeed(a-dolech); //Define maximum velocity
+  motor2.setSpeed(a+dolech); //Define maximum velocity
   motor2.run(FORWARD); //rotate the motor clockwise
 }
 void back(int a, int b)
@@ -134,34 +123,19 @@ void stopAvoiding()
   motor2.run(RELEASE); 
 }
 
-int lookRight()
-{
-    myservo.write(50); 
-    delay(500);
-    int distance = readPing();
-    delay(100);
-    myservo.write(105); 
-    return distance;
-}
-int lookLeft()
-{
-    myservo.write(160); 
-    delay(500);
-    int distance = readPing();
-    delay(100);
-    myservo.write(105); 
-    return distance;
-    delay(100);
-}
-int readPing() { 
-  delay(70);
-  int cm = sonar.ping_cm();
-  if(cm==0)
-  {
-    cm = 250;
+void startUp(){
+  int SpeedSet=0;
+  motor1.run(FORWARD);      
+  motor2.run(FORWARD);
+  for (SpeedSet = 30; SpeedSet < 90; SpeedSet +=2) // slowly bring the speed up to avoid loading down the batteries too quickly
+   {
+    motor1.setSpeed(SpeedSet);
+    
+    motor2.setSpeed(SpeedSet+dolech+2);
+    delay(70);
+   }
   }
-  return cm;
-}
+
 void moveStop() {
   motor1.run(RELEASE); 
   motor2.run(RELEASE);
