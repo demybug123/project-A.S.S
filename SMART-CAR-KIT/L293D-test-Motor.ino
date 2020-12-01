@@ -26,7 +26,9 @@ Servo myservo;              //Servo SG90 cắm vao giắc 3 chân: SERVO2 (TRÊN
 int speedSet=0;
 boolean goesForward=false;
 char command; 
-int dolech=44;
+int dolech1=22;
+int dolech2=23;
+int MAXSPEEDOFFSET=42;
 /*************************Define Line Track pins************************************/
 const int SensorLeft   = A5;      //Left sensor input (A5)
 const int SensorMiddle = A4;       //Midd sensor input (A4)
@@ -48,15 +50,19 @@ void setup() {
     delay(10);
 }
 void loop(){
-    forward(60,60);delay(3000);
+    forward(60,60);delay(20000);
     Stop();delay(100000);
 }
 void forward(int a, int b)
 {
   motor1.setSpeed(b); //Define maximum velocity
   motor1.run(FORWARD); //rotate the motor clockwise
-  motor2.setSpeed(a+dolech); //Define maximum velocity
+  motor2.setSpeed(a+dolech1); //Define maximum velocity
   motor2.run(FORWARD); //rotate the motor clockwise
+  delay(100);
+  motor1.setSpeed(b); //Define maximum velocity
+  motor2.setSpeed(a+dolech2); //Define maximum velocity
+  delay(100);
 }
 void back(int a, int b)
 {
@@ -131,7 +137,7 @@ void startUp(){
    {
     motor1.setSpeed(SpeedSet);
     
-    motor2.setSpeed(SpeedSet+dolech+2);
+    motor2.setSpeed(SpeedSet+MAXSPEEDOFFSET+2);
     delay(70);
    }
   }
