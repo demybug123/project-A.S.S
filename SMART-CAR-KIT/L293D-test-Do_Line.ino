@@ -18,7 +18,6 @@ int MAXSPEEDOFFSET=42;
 bool doStartup=0;
 void setup()
 {
-      Serial.begin(9600);
       pinMode(SensorLeft,  INPUT);    //Init left sensor
       pinMode(SensorMiddle, INPUT);   //Init Middle sensor
       pinMode(SensorRight, INPUT);    //Init Right sensor
@@ -32,34 +31,33 @@ void loop()
       SL = digitalRead(SensorLeft);
       SM = digitalRead(SensorMiddle);
       SR = digitalRead(SensorRight);
-      Serial.print("SL=");Serial.println(SL);Serial.print("SM=");Serial.println(SM);Serial.print("SR=");Serial.println(SR);delay(20);
       //right fast 20 200
       if (SM == HIGH && SR == HIGH && SL == LOW)
       {
-            go(40,60);delay(100);
+            go(45,50);delay(10);//A CHO MOTOR TRAI, B LA MOTOR PHAI
       }
       if (SM == HIGH && SR == LOW && SL == HIGH)
       {
-            go(60,40);delay(100);
+            go(50,45);delay(10);
       }
       
       if(SM == LOW && SR == LOW && SL == HIGH)
       {
-            go(70,40);delay(200);
+            go(45,60);delay(10);
       }
       if (SM == LOW && SR == HIGH && SL == HIGH)
       {
-            go(60,60);delay(150);
+            go(45,45);delay(50);
       }
+      
       if(SM == LOW && SR == HIGH && SL == LOW)
       {
-            go(40,60);delay(100);
+            go(60,45);delay(10);
       }
-      else
+      if(SM == HIGH && SR == HIGH && SL == HIGH)
       {
-            Stop(); delay(100);
+            go(45,45);delay(50);
       }
-
 }
 
 void go(int a, int b)
@@ -85,10 +83,10 @@ void startUp(){
   int SpeedSet=0;
   motor1.run(FORWARD);      
   motor2.run(FORWARD);
-  for (SpeedSet = 30; SpeedSet < 80; SpeedSet +=2) // slowly bring the speed up to avoid loading down the batteries too quickly
+  for (SpeedSet = 30; SpeedSet < 70; SpeedSet +=3) // slowly bring the speed up to avoid loading down the batteries too quickly
    {
+    if(SpeedSet>30)
     motor1.setSpeed(SpeedSet);
-    
     motor2.setSpeed(SpeedSet+MAXSPEEDOFFSET+2);
     delay(70);
    }
