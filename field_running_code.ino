@@ -24,16 +24,17 @@ QueueHandle_t queue;
 
 PN5180ISO15693 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 
-const char * ssid = "VINH NGOC";
-const char * password = "0919789361";
+const char * ssid = "RFID";
+const char * password = "17092020";
 uint8_t uid[8];
 uint8_t uidBuffer[5][8];
 uint8_t uidBucket[5][8];
 uint8_t *ptr1;
 uint8_t *ptr2;
 uint8_t readBuffer[4];
-uint8_t serialBuffer[5][4];
-uint8_t serialBucket[5][4];
+uint8_t dataBuffer[12];
+uint8_t bigBuffer[5][12];
+uint8_t bigBucket[5][12];
 int n=0;
 
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
@@ -113,51 +114,77 @@ void reverseStr(String& string)
         string[n - i - 1]=giua;
     }
 }
-String uidtos(uint8_t* uid,int len){
+
+
+
+String numtos(uint8_t num){
 String s="";
-String S="";
 uint8_t tam;
-for(int i=len-1;i>=0;i--){
-    while(uid[i]>0){
-        tam=uid[i]%10;
+   while(num>0){
+        tam=num%10;
         s+=tam;
-        uid[i]=uid[i]/10;
+        num=num/10;
     }
     reverseStr(s);
+return s;
+}
+
+String uidtos(uint8_t* uid){
+String s="";
+String S="";
+for(int i=7;i>=0;i--){
+  if(uid==0)
+  s="0";
+  else
+    s=numtos(uid[i]);
     S+=s;
     s="";
 }
 return S+"a";
 }
 
-void addToBuffer(uint8_t* uid, uint8_t* readBuffer){
+String processBuffer(uint8_t* dataBuffer){
+String s="";
+String S="";
+for(int i=0;i<9;i++)
+  s=s+char(dataBuffer[i]);
+  S=S+s+numtos(dataBuffer[9])+numtos(dataBuffer[10])+numtos(dataBuffer[11]);
+  return S+"a";
+}
+
+void addToBuffer(uint8_t* uid, uint8_t* dataBuffer){
     for(int j=0;j<8;j++){
       uidBuffer[n][j]=uid[j];
       }
-    for(int j=0;j<4;j++){
-      serialBuffer[n][j]=readBuffer[j];
+    for(int j=0;j<12;j++){
+      bigBuffer[n][j]=dataBuffer[j];
       }
-      n++;
-      
+      n++;  
     }
+    
+
+void addToDataBuffer(uint8_t* readBuffer, uint8_t* dataBuffer, int no){
+  for(int i=0;i<4;i++)
+  dataBuffer[i+4*no]=readBuffer[i];
+  }
 
 void isBufferFull(void * parameter){
   for(;;){
     ptr1=(uint8_t*)uidBucket;
-    ptr2=(uint8_t*)serialBucket;
+    ptr2=(uint8_t*)bigBucket;
     int rowNum;
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
     if(rowNum>=5){
     n=0;
     Serial.println("Buffer is full!");
-    sendData("UID="+uidtos((ptr1),8)+uidtos(ptr1+8,8)+uidtos(ptr1+16,8)+uidtos(ptr1+24,8)+uidtos(ptr1+32,8)+"&Serial="+uidtos(ptr2,4)+uidtos(ptr2+4,4)+uidtos(ptr2+8,4)+uidtos(ptr2+12,4)+uidtos(ptr2+16,4));
+    Serial.println(processBuffer(ptr2));
+    sendData("UID="+uidtos(ptr1)+uidtos(ptr1+8)+uidtos(ptr1+16)+uidtos(ptr1+24)+uidtos(ptr1+32)+"&Serial="+processBuffer(ptr2)+processBuffer(ptr2+12)+processBuffer(ptr2+24)+processBuffer(ptr2+36)+processBuffer(ptr2+48));
     memset(uidBucket, 0, 40*(sizeof(uint8_t)));
-    memset(serialBucket, 0, 20*(sizeof(uint8_t)));
+    memset(bigBucket, 0, 60*(sizeof(uint8_t)));
     delay(sendInterval);
     }
     delay(10);
 }}
-
 
 uint32_t loopCnt = 0;
 bool errorFlag = false;
@@ -213,7 +240,7 @@ void scan(){
   Serial.print(F(", numBlocks="));
   Serial.println(numBlocks);
   Serial.println(F("----------------------------------"));
-  for (int no=0; no<1; no++) {
+  for (int no=0; no<3; no++) {
     rc = nfc.readSingleBlock(uid, no, readBuffer, blockSize);
     if (ISO15693_EC_OK != rc) {
       Serial.print(F("Error in readSingleBlock #"));
@@ -231,6 +258,7 @@ void scan(){
       Serial.print(readBuffer[i], HEX);
       Serial.print(" ");
     }
+    addToDataBuffer(readBuffer,dataBuffer,no);
     Serial.print(" ");
     for (int i=0; i<blockSize; i++) {
       if (isprint(readBuffer[i])) {
@@ -241,18 +269,24 @@ void scan(){
     Serial.println();
   }
 
-  addToBuffer(uid,readBuffer);
+  addToBuffer(uid,dataBuffer);
   if(n>=5){
     xQueueSend(queue, &n, portMAX_DELAY);
     for(int i=0;i<5;i++)
     for(int j=0;j<8;j++)
     uidBucket[i][j]=uidBuffer[i][j];
     for(int i=0;i<5;i++)
-    for(int j=0;j<4;j++)
-    serialBucket[i][j]=serialBuffer[i][j];
+    for(int j=0;j<12;j++)
+    bigBucket[i][j]=bigBuffer[i][j];
     memset(uidBuffer, 0, 40*(sizeof(uint8_t)));
-    memset(serialBuffer, 0, 20*(sizeof(uint8_t)));
+    memset(bigBuffer, 0, 60*(sizeof(uint8_t)));
   }
+  for(int i=0;i<5;i++){
+    Serial.print(i);Serial.print(":");
+    for(int j=0;j<12;j++)
+    Serial.print(bigBucket[i][j]);
+    Serial.println();
+    }
   delay(500);//delay between reads}
 }
 void codeForTask1(void * parameter) {
