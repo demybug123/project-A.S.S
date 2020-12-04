@@ -24,8 +24,8 @@ QueueHandle_t queue;
 
 PN5180ISO15693 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 
-const char * ssid = "RFID";
-const char * password = "17092020";
+const char * ssid = "NET GAME CENTER";
+const char * password = "26101990";
 uint8_t uid[8];
 uint8_t uidBuffer[5][8];
 uint8_t uidBucket[5][8];
@@ -36,7 +36,7 @@ uint8_t dataBuffer[12];
 uint8_t bigBuffer[5][12];
 uint8_t bigBucket[5][12];
 int n=0;
-
+bool onFire;
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
 
 const int sendInterval = 996 *4; // in millis, 996 instead of 1000 is adjustment, with 1000 it jumps ahead a minute every 3-4 hours
@@ -173,6 +173,7 @@ void isBufferFull(void * parameter){
     ptr1=(uint8_t*)uidBucket;
     ptr2=(uint8_t*)bigBucket;
     int rowNum;
+    if(onFire!=0)
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
     if(rowNum>=5){
     n=0;
@@ -190,7 +191,7 @@ uint32_t loopCnt = 0;
 bool errorFlag = false;
 
 void scan(){
-  
+  onFire=digitalRead(FIREPIN);
   if (errorFlag) {
     uint32_t irqStatus = nfc.getIRQStatus();
     showIRQStatus(irqStatus);
