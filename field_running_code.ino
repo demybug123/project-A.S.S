@@ -24,19 +24,19 @@ QueueHandle_t queue;
 
 PN5180ISO15693 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 
-const char * ssid = "NET GAME CENTER";
-const char * password = "26101990";
+const char * ssid = "VINH NGOC";
+const char * password = "0919789361";
 uint8_t uid[8];
-uint8_t uidBuffer[5][8];
-uint8_t uidBucket[5][8];
+uint8_t uidBuffer[3][8];
+uint8_t uidBucket[3][8];
 uint8_t *ptr1;
 uint8_t *ptr2;
 uint8_t readBuffer[4];
 uint8_t dataBuffer[12];
-uint8_t bigBuffer[5][12];
-uint8_t bigBucket[5][12];
+uint8_t bigBuffer[3][12];
+uint8_t bigBucket[3][12];
 int n=0;
-bool onFire;
+
 String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
 
 const int sendInterval = 996 *4; // in millis, 996 instead of 1000 is adjustment, with 1000 it jumps ahead a minute every 3-4 hours
@@ -173,15 +173,14 @@ void isBufferFull(void * parameter){
     ptr1=(uint8_t*)uidBucket;
     ptr2=(uint8_t*)bigBucket;
     int rowNum;
-    if(onFire!=0)
     xQueueReceive(queue, &rowNum, portMAX_DELAY);
-    if(rowNum>=5){
+    if(rowNum>=3){
     n=0;
     Serial.println("Buffer is full!");
     Serial.println(processBuffer(ptr2));
-    sendData("UID="+uidtos(ptr1)+uidtos(ptr1+8)+uidtos(ptr1+16)+uidtos(ptr1+24)+uidtos(ptr1+32)+"&Serial="+processBuffer(ptr2)+processBuffer(ptr2+12)+processBuffer(ptr2+24)+processBuffer(ptr2+36)+processBuffer(ptr2+48));
-    memset(uidBucket, 0, 40*(sizeof(uint8_t)));
-    memset(bigBucket, 0, 60*(sizeof(uint8_t)));
+    sendData("UID="+uidtos(ptr1)+uidtos(ptr1+8)+uidtos(ptr1+16)+"&Serial="+processBuffer(ptr2)+processBuffer(ptr2+12)+processBuffer(ptr2+24));
+    memset(uidBucket, 0, 24*(sizeof(uint8_t)));
+    memset(bigBucket, 0, 36*(sizeof(uint8_t)));
     delay(sendInterval);
     }
     delay(10);
@@ -191,7 +190,7 @@ uint32_t loopCnt = 0;
 bool errorFlag = false;
 
 void scan(){
-  onFire=digitalRead(FIREPIN);
+  
   if (errorFlag) {
     uint32_t irqStatus = nfc.getIRQStatus();
     showIRQStatus(irqStatus);
@@ -271,18 +270,18 @@ void scan(){
   }
 
   addToBuffer(uid,dataBuffer);
-  if(n>=5){
+  if(n>=3){
     xQueueSend(queue, &n, portMAX_DELAY);
-    for(int i=0;i<5;i++)
+    for(int i=0;i<3;i++)
     for(int j=0;j<8;j++)
     uidBucket[i][j]=uidBuffer[i][j];
-    for(int i=0;i<5;i++)
+    for(int i=0;i<3;i++)
     for(int j=0;j<12;j++)
     bigBucket[i][j]=bigBuffer[i][j];
-    memset(uidBuffer, 0, 40*(sizeof(uint8_t)));
-    memset(bigBuffer, 0, 60*(sizeof(uint8_t)));
+    memset(uidBuffer, 0, 24*(sizeof(uint8_t)));
+    memset(bigBuffer, 0, 36*(sizeof(uint8_t)));
   }
-  for(int i=0;i<5;i++){
+  for(int i=0;i<3;i++){
     Serial.print(i);Serial.print(":");
     for(int j=0;j<12;j++)
     Serial.print(bigBucket[i][j]);
