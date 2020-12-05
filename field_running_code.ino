@@ -24,6 +24,8 @@ QueueHandle_t queue;
 
 PN5180ISO15693 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 
+int FIREPIN=15;
+bool fire;
 const char * ssid = "VINH NGOC";
 const char * password = "0919789361";
 uint8_t uid[8];
@@ -37,7 +39,7 @@ uint8_t bigBuffer[3][12];
 uint8_t bigBucket[3][12];
 int n=0;
 
-String GOOGLE_SCRIPT_ID = "AKfycbxibgiGwnmWHVlHq2R7xVx9_wCfG7OEW6YUaLIGtE-Zs3uR5DA"; // Replace by your GAS service id
+String GOOGLE_SCRIPT_ID = "AKfycbyVL69vL_u32IV6mqCGfKM0MhwK_yOAwdUT_QjtXaA34jzaUmA/exec"; // Replace by your GAS service id
 
 const int sendInterval = 996 *4; // in millis, 996 instead of 1000 is adjustment, with 1000 it jumps ahead a minute every 3-4 hours
 const char * root_ca=\
@@ -168,6 +170,7 @@ void addToDataBuffer(uint8_t* readBuffer, uint8_t* dataBuffer, int no){
   dataBuffer[i+4*no]=readBuffer[i];
   }
 
+
 void isBufferFull(void * parameter){
   for(;;){
     ptr1=(uint8_t*)uidBucket;
@@ -177,7 +180,6 @@ void isBufferFull(void * parameter){
     if(rowNum>=3){
     n=0;
     Serial.println("Buffer is full!");
-    Serial.println(processBuffer(ptr2));
     sendData("UID="+uidtos(ptr1)+uidtos(ptr1+8)+uidtos(ptr1+16)+"&Serial="+processBuffer(ptr2)+processBuffer(ptr2+12)+processBuffer(ptr2+24));
     memset(uidBucket, 0, 24*(sizeof(uint8_t)));
     memset(bigBucket, 0, 36*(sizeof(uint8_t)));
@@ -190,7 +192,9 @@ uint32_t loopCnt = 0;
 bool errorFlag = false;
 
 void scan(){
-  
+  fire=digitalRead(FIREPIN);
+    if(fire!=0)
+    sendData("alarm=Cam_bien_bao_chay_da_bi_kich_hoat");
   if (errorFlag) {
     uint32_t irqStatus = nfc.getIRQStatus();
     showIRQStatus(irqStatus);
@@ -207,6 +211,8 @@ void scan(){
   Serial.println(F("----------------------------------"));
   Serial.print(F("Loop #"));
   Serial.print(loopCnt++);
+  Serial.print("fire=");
+  Serial.print(fire);
   Serial.print("n=");
   Serial.println(n);
 
@@ -287,6 +293,7 @@ void scan(){
     Serial.print(bigBucket[i][j]);
     Serial.println();
     }
+    
   delay(500);//delay between reads}
 }
 void codeForTask1(void * parameter) {
@@ -297,6 +304,7 @@ void codeForTask1(void * parameter) {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(FIREPIN,INPUT_PULLUP);
     WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
