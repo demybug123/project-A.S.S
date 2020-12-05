@@ -2,7 +2,7 @@ var timeZone = "ICT"; //get yours at https://www.timeanddate.com/time/zones/
 var dateTimeFormat = "dd/MM/yyyy HH:mm";
 
 var enableSendingEmails = true;
-var emailAddress = "skyblockdantdm@gmail.com"; // comma separate for several emails
+var emailAddress = "projectass1709@gmail.com"; // comma separate for several emails
 // 'bob@example.com';
 // 'bob@example.com,admin@example.com';
 
@@ -147,4 +147,3 @@ function sendEmail(message) {
     var subject = '!!!CẢNH BÁO!!!';
    MailApp.sendEmail(emailAddress, subject, message);
 }
-
